@@ -1,17 +1,18 @@
 package main
 
 import (
-	"./comb"
-	"./get"
 	"fmt"
+	"github.com/kiberlom/spider/comb"
+	"github.com/kiberlom/spider/get"
 )
 
 const (
-	GOR  = 500 // количество одновреммено работающий потоков
+	GOR  = 500     // количество одновреммено работающий потоков
 	PROT = "https" // протокол
-	DOM  = "ua" // доменная зона
+	DOM  = "ua"    // доменная зона
 )
 
+// канал с очередью
 var can chan int = make(chan int, GOR)
 
 func testSite(name string, c chan int, i int) {
@@ -24,7 +25,7 @@ func testSite(name string, c chan int, i int) {
 	// опрашиваем url
 	s := get.New(PROT, name, DOM)
 	err := s.Test()
-	if err == nil{
+	if err == nil {
 
 	}
 	fmt.Println(i, ". ", s.Url, "  -", s.ServerCode, "   [", err, "]")
