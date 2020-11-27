@@ -4,64 +4,79 @@ import (
 	"fmt"
 	"github.com/kiberlom/spider/comb"
 	"github.com/kiberlom/spider/get"
+	"net/http"
+	_ "net/http/pprof"
+	"runtime"
 )
 
 const (
-	GOR  = 500     // количество одновреммено работающий потоков
+	GOR  = 1000    // количество одновреммено работающий потоков
 	PROT = "https" // протокол
-	DOM  = "ua"    // доменная зона
+	DOM  = "cz"    // доменная зона
 )
 
 // канал с очередью
-var can chan int = make(chan int, GOR)
+var can = make(chan recv, GOR)
 
-func testSite(name string, c chan int, i int) {
+type recv struct {
+	i   int
+	url string
+}
 
-	// освобождаем место в канале
-	defer func() {
-		<-c
-	}()
+// проверка домена
+func testSite(c chan recv) {
 
-	// опрашиваем url
-	s := get.New(PROT, name, DOM)
-	err := s.Test()
-	if err == nil {
+	for {
+		select {
+		case u := <-c:
+			// опрашиваем url
+			s := get.New(PROT, u.url, DOM)
+			err := s.Test()
+			if err == nil {
+				fmt.Println(err)
+			}
+
+			g := runtime.NumGoroutine()
+			fmt.Println(u.i, ".  [", g, "]  ", s.Url, "  -", s.ServerCode, "   [", err, "]")
+		}
 
 	}
-	fmt.Println(i, ". ", s.Url, "  -", s.ServerCode, "   [", err, "]")
 
 }
 
 func main() {
+
+	// pprof
+	go http.ListenAndServe(":8080", nil)
 
 	//начальная строка
 	a := "0"
 	// просто счетчик
 	i := 1
 
+	for i := 0; i < GOR; i++ {
+		go testSite(can)
+	}
+
 	for {
 
-		// если есть возможность создать поток
-		if len(can) < GOR {
-			// занимаем место в канале
-			can <- 1
+		// занимаем место в канале
+		t := recv{i, a}
 
-			// создаем гарутину опроса по url
-			go testSite(a, can, i)
+		// передаем в канал данные
+		can <- t
 
-			// создаем следующую комбинацию
-			ceb, err := comb.Next(a)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			// сохраняем комбинацию
-			a = ceb
-			// увеличиваем счетчик
-			i++
-
+		// создаем следующую комбинацию
+		ceb, err := comb.Next(a)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
+
+		// сохраняем комбинацию
+		a = ceb
+		// увеличиваем счетчик
+		i++
 
 	}
 
