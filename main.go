@@ -32,8 +32,9 @@ func testSite(c chan recv) {
 			// опрашиваем url
 			s := get.New(PROT, u.url, DOM)
 			err := s.Test()
-			if err == nil {
+			if err != nil {
 				fmt.Println(err)
+				continue
 			}
 
 			g := runtime.NumGoroutine()
