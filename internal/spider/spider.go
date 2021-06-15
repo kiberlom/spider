@@ -1,12 +1,11 @@
-package main
+package spider
 
 import (
 	"fmt"
-	"github.com/kiberlom/spider/comb"
-	"github.com/kiberlom/spider/get"
-	"net/http"
-	_ "net/http/pprof"
 	"runtime"
+
+	"github.com/kiberlom/spider/internal/spider/comb"
+	"github.com/kiberlom/spider/internal/spider/get"
 )
 
 const (
@@ -45,10 +44,7 @@ func testSite(c chan recv) {
 
 }
 
-func main() {
-
-	// pprof
-	go http.ListenAndServe(":8080", nil)
+func Start() {
 
 	//начальная строка
 	a := "0"

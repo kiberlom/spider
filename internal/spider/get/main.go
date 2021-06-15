@@ -36,32 +36,38 @@ func New(protokol, name, dom string) setSite {
 // запрос на сервер
 func (s *setSite) Test() error {
 
+	// создаем клиента
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
+	// создаем запрос
 	r, err := http.NewRequest("GET", s.Url, nil)
 	if err != nil {
 		return err
 	}
 
+	// устанавливаем заголовок
 	r.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36")
 
+	// делаем запрос
 	resp, err := client.Do(r)
 	if err != nil {
 		return err
 	}
 
+	// получаем заголовки и ответ
 	s.Server = resp.Header["Server"]
 	s.ServerPower = resp.Header["X-Powered-By"]
 	s.ServerCode = resp.StatusCode
 
-	//перекодируем
+	//кодируем в нужную кодировку из заголовка
 	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
 	if err != nil {
 		return err
 	}
 
+	// читаем тело
 	if h, err := ioutil.ReadAll(utf8); err != nil {
 		s.Body = "error read"
 	} else {
