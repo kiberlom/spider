@@ -1,0 +1,4 @@
+[spider]
+thread = 100
+protocol = "http"
+domain = "cz"

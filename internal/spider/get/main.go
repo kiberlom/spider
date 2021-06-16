@@ -1,6 +1,7 @@
 package get
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -44,7 +45,7 @@ func (s *setSite) Test() error {
 	// создаем запрос
 	r, err := http.NewRequest("GET", s.Url, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf(" невозможно создать Request: %v", err)
 	}
 
 	// устанавливаем заголовок
@@ -53,8 +54,9 @@ func (s *setSite) Test() error {
 	// делаем запрос
 	resp, err := client.Do(r)
 	if err != nil {
-		return err
+		return fmt.Errorf(" не удалось сделать запрос: %v", err)
 	}
+	defer resp.Body.Close()
 
 	// получаем заголовки и ответ
 	s.Server = resp.Header["Server"]
@@ -62,14 +64,15 @@ func (s *setSite) Test() error {
 	s.ServerCode = resp.StatusCode
 
 	//кодируем в нужную кодировку из заголовка
-	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	coding, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
 	if err != nil {
-		return err
+		return fmt.Errorf(" ошибка при установке кодировки для тела: %v", err)
 	}
 
 	// читаем тело
-	if h, err := ioutil.ReadAll(utf8); err != nil {
-		s.Body = "error read"
+	h, err := ioutil.ReadAll(coding)
+	if err != nil {
+		s.Body = fmt.Sprintf(" не удалось прочитать тело: %v", err)
 	} else {
 		s.Body = string(h)
 	}
